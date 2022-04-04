@@ -185,3 +185,18 @@ void wagon()
       glutSolidCube(1.0);
     glPopMatrix();
 }
+
+//--------------- Station -----------------------------------------
+// This is a common base for the locomotive and wagons
+// The base is of rectangular shape (20 length x 10 width x 2 height)
+// and has wheels and connectors attached.
+//-----------------------------------------------------------------
+void station()
+{
+	glColor4f(0.2, 0.2, 0.2, 1.0);   //Base color
+	glPushMatrix();
+	glTranslatef(0.0, 4.0, 0.0);
+	glScalef(100.0, 5.0, 30.0);     //Size 20x10 units, thickness 2 units.
+	glutSolidCube(1.0);
+	glPopMatrix();
+}

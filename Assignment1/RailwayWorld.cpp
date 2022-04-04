@@ -10,6 +10,11 @@
 #include "RailModels.h"
 
 float theta = 0;
+float cam_rot_spd = 0.1;
+float cam_move_spd = 2;
+float cam_y = 50;
+float cam_dst = 200;
+float cam_angle = 0;
 
 void myTimer(int value)
 {
@@ -17,6 +22,23 @@ void myTimer(int value)
     glutPostRedisplay();
     glutTimerFunc(30, myTimer, 0);
 }
+
+void specialKeys(int key, int x, int y)
+{
+    if (key == GLUT_KEY_UP) cam_y += cam_move_spd;
+    else if (key == GLUT_KEY_DOWN) cam_y -= cam_move_spd;
+    else if (key == GLUT_KEY_LEFT) cam_angle -= cam_rot_spd;
+    else if (key == GLUT_KEY_RIGHT) cam_angle += cam_rot_spd;
+    glutPostRedisplay();
+}
+
+void normalKeys(unsigned char key, int x, int y)
+{
+    if (key == 'w') cam_dst -= cam_move_spd;
+    else if (key == 's') cam_dst += cam_move_spd;
+    glutPostRedisplay();
+}
+
 
 //---------------------------------------------------------------------
 void initialize(void) 
@@ -66,12 +88,13 @@ void display(void)
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 
-   gluLookAt (-80, 50, 250, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+   gluLookAt (cam_dst * sin(cam_angle), cam_y, cam_dst * cos(cam_angle), 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
    glLightfv(GL_LIGHT0, GL_POSITION, lgt_pos);   //light position
 
 
 
    floor();
+   station();
    tracks(120, 10);  //mean radius 120 units, width 10 units
 
    glPushMatrix();
@@ -109,6 +132,8 @@ int main(int argc, char** argv)
 
    glutDisplayFunc(display);
    glutTimerFunc(50, myTimer, 0);
+   glutSpecialFunc(specialKeys);
+   glutKeyboardFunc(normalKeys);
    glutMainLoop();
    return 0;
 }

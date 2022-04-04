@@ -12,3 +12,5 @@ void tracks(float, float) ;
 void engine();
 
 void wagon();
+
+void station();
