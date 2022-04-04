@@ -22,6 +22,9 @@
     <ClCompile Include="RailModels.cpp" />
     <ClCompile Include="RailwayWorld.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="loadBMP.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

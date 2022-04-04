@@ -2,7 +2,6 @@
 //  COSC363: Computer Graphics (2022);  University of Canterbury.
 //
 //  FILE NAME: RailwayWorld.cpp
-//  See Lab02.pdf for details
 //  ========================================================================
 
 #include <math.h>
@@ -45,6 +44,8 @@ void initialize(void)
 {
     float grey[4] = {0.2, 0.2, 0.2, 1.0};
     float white[4]  = {1.0, 1.0, 1.0, 1.0};
+
+    loadTexture();
 
     glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
@@ -125,7 +126,7 @@ int main(int argc, char** argv)
 {
    glutInit(&argc, argv);
    glutInitDisplayMode (GLUT_DOUBLE|GLUT_DEPTH);
-   glutInitWindowSize (600, 600); 
+   glutInitWindowSize (1300, 1000); 
    glutInitWindowPosition (50, 50);
    glutCreateWindow ("Assignment 1");
    initialize ();

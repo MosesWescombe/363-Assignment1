@@ -14,3 +14,5 @@ void engine();
 void wagon();
 
 void station();
+
+void loadTexture();

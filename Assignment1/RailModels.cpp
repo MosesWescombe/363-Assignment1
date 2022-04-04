@@ -8,6 +8,23 @@
 #include <cmath>
 #include <GL/freeglut.h>
 #include "RailModels.h"
+#include "LoadBMP.h"
+#include <iostream>
+
+using namespace std;
+
+GLuint txId;
+
+//------Function to load a texture in bmp format  ------------------------
+void loadTexture()
+{
+	glGenTextures(1, &txId); 				// Create a Texture object
+	glBindTexture(GL_TEXTURE_2D, txId);		//Use this texture
+	loadBMP("roof.bmp");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	//Set texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+}
 
 //--------------- GROUND PLANE ------------------------------------
 // This is a square shaped region on the xz-plane of size 400x400 units
@@ -186,6 +203,24 @@ void wagon()
     glPopMatrix();
 }
 
+// Besier curve equation
+float bez_point(double t, float p1, float p2, float p3)
+{
+	return pow(t, 2)*p3 + 2*p2*t*(1-t) + pow((1-t), 2)*p1;
+}
+
+void normal(float x1, float y1, float z1,
+	float x2, float y2, float z2,
+	float x3, float y3, float z3)
+{
+	float nx, ny, nz;
+	nx = y1 * (z2 - z3) + y2 * (z3 - z1) + y3 * (z1 - z2);
+	ny = z1 * (x2 - x3) + z2 * (x3 - x1) + z3 * (x1 - x2);
+	nz = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2);
+
+	glNormal3f(nx, ny, nz);
+}
+
 //--------------- Station -----------------------------------------
 // This is a common base for the locomotive and wagons
 // The base is of rectangular shape (20 length x 10 width x 2 height)
@@ -193,10 +228,92 @@ void wagon()
 //-----------------------------------------------------------------
 void station()
 {
-	glColor4f(0.2, 0.2, 0.2, 1.0);   //Base color
+	float height = 40.0;
+	float width = 120.0;
+	float length = 20.0;
+
+	float p3_hgt = 30;
+	float p3_z = -length / 2;
+
+	// Ground
 	glPushMatrix();
-	glTranslatef(0.0, 4.0, 0.0);
-	glScalef(100.0, 5.0, 30.0);     //Size 20x10 units, thickness 2 units.
-	glutSolidCube(1.0);
+		glColor4f(0.2, 0.2, 0.2, 1.0);   //Base color
+		glTranslatef(0.0, 2.5, 0);
+		glScalef(width, 5.0, 20.0);
+		glutSolidCube(1.0);
+	glPopMatrix();
+
+	
+	// Roof
+	glPushMatrix();
+		glColor4f(1, 1, 1, 1.0);
+		glTranslatef(0.0, 0.0, 1.5 * length);
+		int sections = 6;
+		int steps = sections * 2 + 1;
+
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, txId);
+
+		// Curved top
+		glBegin(GL_QUAD_STRIP);
+		double prev_t = 0;
+		for (int i = 0; i < steps; i++) {
+			double t = ((double)i)/((double)(steps - 1));
+			float y = bez_point(t, height, height + p3_hgt, height);
+			float z = bez_point(t, 0.0, p3_z, -2 * length);
+
+			if (i > 0) {
+				normal(-1 * width / 2, y, z,
+					width / 2, y, z,
+					width / 2, bez_point(prev_t, height, height + p3_hgt, height), bez_point(prev_t, 0.0, p3_z, -2 * length));
+			}
+
+			glTexCoord2f(0.0,0.0); glVertex3f(-1 * width / 2, y, z);
+			glTexCoord2f(0.1,1.0); glVertex3f(width / 2, y, z);
+			prev_t = t;
+		}
+		glEnd();
+
+		glDisable(GL_TEXTURE_2D);
+
+		// Left wall
+		glNormal3f(-1., 0., 0.);
+		glBegin(GL_QUAD_STRIP);
+		for (int i = 0; i < steps; i++) {
+			double t = ((double)i) / ((double)(steps - 1));
+			float y = bez_point(t, height, height + p3_hgt, height);
+			float z = bez_point(t, 0.0, p3_z, -2 * length);
+			glVertex3f(-1 * width / 2, y, z);
+			glVertex3f(-1 * width / 2, height, z);
+		}
+		glEnd();
+
+		// Right wall
+		glNormal3f(1., 0., 0.);
+		glBegin(GL_QUAD_STRIP);
+		for (int i = 0; i < steps; i++) {
+			double t = ((double)i) / ((double)(steps - 1));
+			float y = bez_point(t, height, height + p3_hgt, height);
+			float z = bez_point(t, 0.0, p3_z, -2 * length);
+			glVertex3f(width / 2, y, z);
+			glVertex3f(width / 2, height, z);
+		}
+		glEnd();
+
+		// Ceiling
+		glNormal3f(0., -1., 0.);
+		glBegin(GL_QUADS);
+			glVertex3f(-1 * width / 2, height, 0);
+			glVertex3f(-1 * width / 2, height, -2 * length);
+			glVertex3f(width / 2, height, -2 * length);
+			glVertex3f(width / 2, height, 0);
+		glEnd();
+	glPopMatrix();
+
+	// Building
+	glPushMatrix();
+		glTranslatef(0.0, height/2, length);
+		glScalef(width, height, length);
+		glutSolidCube(1.0);
 	glPopMatrix();
 }
