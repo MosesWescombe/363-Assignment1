@@ -40,7 +40,7 @@ void normalKeys(unsigned char key, int x, int y)
 
 
 //---------------------------------------------------------------------
-void initialize(void) 
+void initialize(void)
 {
     float grey[4] = {0.2, 0.2, 0.2, 1.0};
     float white[4]  = {1.0, 1.0, 1.0, 1.0};
@@ -48,10 +48,10 @@ void initialize(void)
     loadTexture();
 
     glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT0);
     glEnable(GL_LIGHT1);
 
-//	Define light's ambient, diffuse, specular properties
+//  Define light's ambient, diffuse, specular properties
     glLightfv(GL_LIGHT0, GL_AMBIENT, grey);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, white);
     glLightfv(GL_LIGHT0, GL_SPECULAR, white);
@@ -69,9 +69,9 @@ void initialize(void)
     glMaterialfv(GL_FRONT, GL_SPECULAR, white);
     glMaterialf(GL_FRONT, GL_SHININESS, 50);
 
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_NORMALIZE);
-	glClearColor (0.0, 0.0, 0.0, 0.0);  //Background colour
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_NORMALIZE);
+    glClearColor (0.0, 0.0, 0.0, 0.0);  //Background colour
 
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
@@ -96,7 +96,7 @@ void display(void)
 
    floor();
    station();
-   tracks(120, 10);  //mean radius 120 units, width 10 units
+   tracks();  //mean radius 120 units, width 10 units
 
    glPushMatrix();
 
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 {
    glutInit(&argc, argv);
    glutInitDisplayMode (GLUT_DOUBLE|GLUT_DEPTH);
-   glutInitWindowSize (1300, 1000); 
+   glutInitWindowSize (1300, 1000);
    glutInitWindowPosition (50, 50);
    glutCreateWindow ("Assignment 1");
    initialize ();

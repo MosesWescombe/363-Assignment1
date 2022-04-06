@@ -7,7 +7,7 @@
 
 void floor();
 
-void tracks(float, float) ; 
+void tracks() ;
 
 void engine();
 
