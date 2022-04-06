@@ -5,6 +5,9 @@
 //  Header file for a collection of models for a railway scene
 //  ========================================================================
 
+extern long nPoints;
+extern float points[];
+
 void floor();
 
 void tracks() ;

@@ -7,26 +7,39 @@
 #include <math.h>
 #include <GL/freeglut.h>
 #include "RailModels.h"
+#include <iostream>
 
-float theta = 0;
+#define PI (atan(1)*4)
+
+int count = 0;
+
 float cam_rot_spd = 0.1;
 float cam_move_spd = 2;
 float cam_y = 50;
 float cam_dst = 200;
 float cam_angle = 0;
 
+long moveIncrement = 1; // Larger is faster
+long currentPosition = 0;
+
+int wagonSpacing = 22;
+
 void myTimer(int value)
 {
-    theta += 0.5;
+    if (count % 1 == 0) {
+        currentPosition = (currentPosition + moveIncrement * 2) % nPoints;
+    }
     glutPostRedisplay();
-    glutTimerFunc(30, myTimer, 0);
+    count = (count + 1) % 1000000;
+    glutTimerFunc(1, myTimer, 0);
 }
 
 void specialKeys(int key, int x, int y)
 {
     if (key == GLUT_KEY_UP) cam_y += cam_move_spd;
     else if (key == GLUT_KEY_DOWN) cam_y -= cam_move_spd;
-    else if (key == GLUT_KEY_LEFT) cam_angle -= cam_rot_spd;
+
+    if (key == GLUT_KEY_LEFT) cam_angle -= cam_rot_spd;
     else if (key == GLUT_KEY_RIGHT) cam_angle += cam_rot_spd;
     glutPostRedisplay();
 }
@@ -92,25 +105,40 @@ void display(void)
    gluLookAt (cam_dst * sin(cam_angle), cam_y, cam_dst * cos(cam_angle), 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
    glLightfv(GL_LIGHT0, GL_POSITION, lgt_pos);   //light position
 
-
-
    floor();
-   station();
-   tracks();  //mean radius 120 units, width 10 units
+   //station();
+
+    glTranslatef(-200, 0, -100);
+    tracks();
 
    glPushMatrix();
-
-        glRotatef(theta, 0., 1., 0.);
-
-        for (int i = 0; i < 4; i++)
+        for (int i = 1; i <= 4; i++)
         {
+            long posIndex = (currentPosition - (i * 2 * wagonSpacing)) % nPoints;
+            // Fix modulo negative number issue
+            if (posIndex < 0) {
+                posIndex = nPoints + posIndex;
+            }
+            float directionVector[2] = { 0 };
+
+            directionVector[0] = points[(posIndex + 2) % nPoints] - points[posIndex];
+            directionVector[1] = points[(posIndex + 3) % nPoints] - points[posIndex + 1];
+
             glPushMatrix();
-                glRotatef((i+1)*-10.5, 0., 1., 0.);
-                glTranslatef(0, 1,-120);
+                glTranslatef(points[posIndex], 0, points[posIndex + 1]);
+                glRotatef(atan2(directionVector[1], -directionVector[0]) * (180 / PI), 0., 1., 0.);
                 wagon();
             glPopMatrix();
         }
-        glTranslatef(0, 1,-120);
+        // Create Ui vector 2
+        float directionVector[2]= {0};
+        directionVector[0] = points[(currentPosition + 2) % nPoints] - points[currentPosition];
+        directionVector[1] = points[(currentPosition + 3) % nPoints] - points[currentPosition + 1];
+
+
+        glTranslatef(points[currentPosition], 0, points[currentPosition + 1]);
+        glRotatef(atan2(directionVector[1], -directionVector[0]) * (180/PI), 0., 1., 0.);
+
         glLightfv(GL_LIGHT1, GL_POSITION, headlight);
         glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spotDir);
         engine(); //locomotive
@@ -132,7 +160,7 @@ int main(int argc, char** argv)
    initialize ();
 
    glutDisplayFunc(display);
-   glutTimerFunc(50, myTimer, 0);
+   glutTimerFunc(1, myTimer, 0);
    glutSpecialFunc(specialKeys);
    glutKeyboardFunc(normalKeys);
    glutMainLoop();
