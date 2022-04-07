@@ -108,7 +108,9 @@ void display(void)
    floor();
    //station();
 
+    // Fix weird poisitoning with track
     glTranslatef(-200, 0, -100);
+    bridge(0, 200, 5);
     tracks();
 
    glPushMatrix();
