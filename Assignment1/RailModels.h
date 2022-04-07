@@ -10,7 +10,7 @@ extern float points[];
 
 void floor();
 
-void bridge(long startPoint, long length, long padding);
+void bridge(long startPoint, long length, long padding, long tunnelSize, long straightHeight);
 
 void tracks();
 

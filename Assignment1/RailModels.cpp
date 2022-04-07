@@ -76,11 +76,21 @@ float vectorLength2F(float vector[2]) {
     return sqrt(pow(vector[0], 2) + pow(vector[1], 2));
 }
 
+float vectorLength3F(float vector[3]) {
+    return sqrt(pow(vector[0], 2) + pow(vector[1], 2) + pow(vector[2], 2));
+}
+
 void normalized2F(float vector[2]) {
     float length = vectorLength2F(vector);
-    float normalVector[2] = { vector[0] / length, vector[1] / length };
-    vector[0] = normalVector[0];
-    vector[1] = normalVector[1];
+    vector[0] = vector[0] / length;
+    vector[1] = vector[1] / length;
+}
+
+void normalized3F(float vector[3]) {
+    float length = vectorLength3F(vector);
+    vector[0] = vector[0] / length;
+    vector[1] = vector[1] / length;
+    vector[2] = vector[2] / length;
 }
 
 //--------------- GROUND PLANE ------------------------------------
@@ -262,15 +272,13 @@ void tracks()
 
 //--------------- RAILWAY TRACK ------------------------------------
 //-----------------------------------------------------------------
-void bridge(long startPoint, long length, long padding)
+void bridge(long startPoint, long length, long padding, long tunnelSize, long straightHeight)
 {
     startPoint *= 2;
     length *= 2;
-    float straightHeight = 20;
     float tunnelWidth = padding + outerTrackW;
-    float tunnelSize = 5;
 
-    glColor4f(0.2, 0.2, 0.2, 1.0);   //Base 
+    glColor4f(0.5333, 0.549, 0.5529, 1.0);   //Base 
 
     // Left Inner wall
     glBegin(GL_QUAD_STRIP);
@@ -338,10 +346,41 @@ void bridge(long startPoint, long length, long padding)
     }
     glEnd();
 
-    // Inner roof
-    long prev_t = nPoints - 1;
-    int steps = 15;
-    int p3_hgt = straightHeight + 15;
+    // Left Outer wall
+    glBegin(GL_QUAD_STRIP);
+    for (long i = 0; i < nPoints; i += 2)
+    {
+        // Only draw within a certain range
+        if (!(i >= startPoint && i <= startPoint + length)) {
+            continue;
+        }
+
+        float directionVector[2] = { 0 };
+
+        // Create Ui vector 1
+        directionVector[0] = points[i] - points[(i + 2) % nPoints];
+        directionVector[1] = points[i + 1] - points[(i + 3) % nPoints];
+
+        // Create perpendicular vector for Pi
+        float perpVector[2] = { 0 };
+        perpVector[0] = directionVector[1];
+        perpVector[1] = -directionVector[0];
+        normalized2F(perpVector);
+
+        // Calculate track points
+        float A1[2] = { points[i] + perpVector[0] * (tunnelWidth + tunnelSize), points[i + 1] + perpVector[1] * (tunnelWidth + tunnelSize) };
+
+
+        glPushMatrix();
+        glNormal3f(perpVector[0], 0.0, perpVector[1]);
+
+        glVertex3f(A1[0], 0, A1[1]);
+        glVertex3f(A1[0], straightHeight, A1[1]);
+        glPopMatrix();
+    }
+    glEnd();
+
+    // Right Outer wall
     glBegin(GL_QUAD_STRIP);
     for (long i = 0; i < nPoints; i += 2)
     {
@@ -362,19 +401,203 @@ void bridge(long startPoint, long length, long padding)
         normalized2F(perpVector);
 
         // Calculate wall points
-        float A1[2] = { points[i] + perpVector[0] * tunnelWidth, points[i + 1] + perpVector[1] * tunnelWidth };
-        float B1[2] = { points[i] - perpVector[0] * tunnelWidth, points[i + 1] - perpVector[1] * tunnelWidth };
+        float B1[2] = { points[i] - perpVector[0] * (tunnelWidth + tunnelSize), points[i + 1] - perpVector[1] * (tunnelWidth + tunnelSize) };
 
-        double t = ((double)i) / ((double)(steps - 1));
-        float x = bez_point(t, A1[0], points[i], A1[1]);
-        float y = bez_point(t, straightHeight, p3_hgt, straightHeight);
-        float z = bez_point(t, B1[0], points[i + 1], B1[1]);
+        glPushMatrix();
+        glNormal3f(-perpVector[0], 0.0, -perpVector[1]);
 
-        glVertex3f(x, y, z);
-        glVertex3f(x, y, z);
-        prev_t = t;
+        glVertex3f(B1[0], 0, B1[1]);
+        glVertex3f(B1[0], straightHeight, B1[1]);
+        glPopMatrix();
     }
     glEnd();
+
+    // Roof
+    int p3_hgt = straightHeight + 15;
+    for (long i = 0; i < nPoints; i += 2)
+    {
+        // Only draw within a certain range
+        if (!(i >= startPoint && i < startPoint + length)) { // finishes one early
+            continue;
+        }
+
+        // Create Ui vector 1
+        float directionVector[2] = { 0 };
+        directionVector[0] = points[i] - points[(i + 2) % nPoints];
+        directionVector[1] = points[i + 1] - points[(i + 3) % nPoints];
+
+        // Create Ui vector 2
+        float directionVector2[2] = { 0 };
+        directionVector2[0] = points[(i + 2) % nPoints] - points[(i + 4) % nPoints];
+        directionVector2[1] = points[(i + 3) % nPoints] - points[(i + 5) % nPoints];
+
+        // Create perpendicular vector for Pi
+        float perpVector[2] = { 0 };
+        perpVector[0] = directionVector[1];
+        perpVector[1] = -directionVector[0];
+        normalized2F(perpVector);
+
+        // Create perpendicular2 vector for Pi
+        float perpVector2[2] = { 0 };
+        perpVector2[0] = directionVector2[1];
+        perpVector2[1] = -directionVector2[0];
+        normalized2F(perpVector2);
+
+        // Calculate wall points
+        float A1[2] = { points[i] + perpVector[0] * tunnelWidth, points[i + 1] + perpVector[1] * tunnelWidth };
+        float B1[2] = { points[i] - perpVector[0] * tunnelWidth, points[i + 1] - perpVector[1] * tunnelWidth };
+        float A2[2] = { points[(i + 2) % nPoints] + perpVector2[0] * tunnelWidth, points[(i + 3) % nPoints] + perpVector2[1] * tunnelWidth };
+        float B2[2] = { points[(i + 2) % nPoints] - perpVector2[0] * tunnelWidth, points[(i + 3) % nPoints] - perpVector2[1] * tunnelWidth };
+
+        float outer_A1[2] = { points[i] + perpVector[0] * (tunnelWidth + tunnelSize), points[i + 1] + perpVector[1] * (tunnelWidth + tunnelSize) };
+        float outer_B1[2] = { points[i] - perpVector[0] * (tunnelWidth + tunnelSize),points[i + 1] - perpVector[1] * (tunnelWidth + tunnelSize) };
+        float outer_A2[2] = { points[(i + 2) % nPoints] + perpVector2[0] * (tunnelWidth + tunnelSize),points[(i + 3) % nPoints] + perpVector2[1] * (tunnelWidth + tunnelSize) };
+        float outer_B2[2] = { points[(i + 2) % nPoints] - perpVector2[0] * (tunnelWidth + tunnelSize),points[(i + 3) % nPoints] - perpVector2[1] * (tunnelWidth + tunnelSize) };
+
+        // Inner roof
+        int steps = 20;
+        glBegin(GL_QUAD_STRIP);
+        for (long j = 0; j < steps; j += 1)
+        {
+            double t = ((double)j) / ((double)(steps - 1));
+
+            float x1 = bez_point(t, A1[0], points[i], B1[0]);
+            float y1 = bez_point(t, straightHeight, p3_hgt, straightHeight);
+            float z1 = bez_point(t, A1[1], points[i + 1], B1[1]);
+
+            float x2 = bez_point(t, A2[0], points[(i + 2) % nPoints], B2[0]);
+            float y2 = bez_point(t, straightHeight, p3_hgt, straightHeight);
+            float z2 = bez_point(t, A2[1], points[(i + 3) % nPoints], B2[1]);
+
+            float normal[3] = { x1 - points[i], y1 - straightHeight, z1 - points[i + 1] };
+            normalized3F(normal);
+            glNormal3f(normal[0], normal[1], normal[2]);
+
+            glVertex3f(x1, y1, z1);
+            glVertex3f(x2, y2, z2);
+        }
+        glEnd();
+
+        // Outer roof
+        glBegin(GL_QUAD_STRIP);
+        for (long j = 0; j < steps; j += 1)
+        {
+            double t = ((double)j) / ((double)(steps - 1));
+
+            float x1 = bez_point(t, outer_A1[0], points[i], outer_B1[0]);
+            float y1 = bez_point(t, straightHeight, p3_hgt + (tunnelSize * 2), straightHeight);
+            float z1 = bez_point(t, outer_A1[1], points[i + 1], outer_B1[1]);
+
+            float x2 = bez_point(t, outer_A2[0], points[(i + 2) % nPoints], outer_B2[0]);
+            float y2 = bez_point(t, straightHeight, p3_hgt + (tunnelSize * 2), straightHeight);
+            float z2 = bez_point(t, outer_A2[1], points[(i + 3) % nPoints], outer_B2[1]);
+
+            float normal[3] = { x1 - points[i], y1 - straightHeight, z1 - points[i + 1] };
+            normalized3F(normal);
+            glNormal3f(normal[0], normal[1], normal[2]);
+
+            glVertex3f(x1, y1, z1);
+            glVertex3f(x2, y2, z2);
+        }
+        glEnd();
+
+        // Ends
+        if (i == startPoint || i == startPoint + length - 2) {
+            glBegin(GL_QUAD_STRIP);
+            for (long j = 0; j < steps; j += 1)
+            {
+                double t = ((double)j) / ((double)(steps - 1));
+                float x1, x2, y1, y2, z1, z2;
+                if (i == startPoint) {
+                    x1 = bez_point(t, A1[0], points[i], B1[0]);
+                    y1 = bez_point(t, straightHeight, p3_hgt, straightHeight);
+                    z1 = bez_point(t, A1[1], points[i + 1], B1[1]);
+                    x2 = bez_point(t, outer_A1[0], points[i], outer_B1[0]);
+                    y2 = bez_point(t, straightHeight, p3_hgt + (tunnelSize * 2), straightHeight);
+                    z2 = bez_point(t, outer_A1[1], points[i + 1], outer_B1[1]);
+                }
+                else {
+                    x1 = bez_point(t, A2[0], points[(i + 2) % nPoints], B2[0]);
+                    y1 = bez_point(t, straightHeight, p3_hgt, straightHeight);
+                    z1 = bez_point(t, A2[1], points[(i + 3) % nPoints], B2[1]);
+                    x2 = bez_point(t, outer_A2[0], points[(i + 2) % nPoints], outer_B2[0]);
+                    y2 = bez_point(t, straightHeight, p3_hgt + (tunnelSize * 2), straightHeight);
+                    z2 = bez_point(t, outer_A2[1], points[(i + 3) % nPoints], outer_B2[1]);
+                }
+
+                glNormal3f(-directionVector[0], 0, -directionVector[1]);
+
+                glVertex3f(x1, y1, z1);
+                glVertex3f(x2, y2, z2);
+            }
+            glEnd();
+
+            // Draw a second and third end to patch weird criss cross stuff
+            glBegin(GL_QUAD_STRIP);
+            for (long j = 0; j < steps; j += 1)
+            {
+                double t = ((double)j) / ((double)(steps - 1));
+                float x1, x2, y1, y2, z1, z2;
+                x1 = bez_point(t, A1[0], points[i], B1[0]);
+                y1 = bez_point(t, straightHeight, p3_hgt, straightHeight);
+                z1 = bez_point(t, A1[1], points[i + 1], B1[1]);
+                x2 = bez_point(t, outer_A2[0], points[(i + 2) % nPoints], outer_B2[0]);
+                y2 = bez_point(t, straightHeight, p3_hgt + (tunnelSize * 2), straightHeight);
+                z2 = bez_point(t, outer_A2[1], points[(i + 3) % nPoints], outer_B2[1]);
+
+                glNormal3f(-directionVector[0], 0, -directionVector[1]);
+
+                glVertex3f(x1, y1, z1);
+                glVertex3f(x2, y2, z2);
+            }
+            glEnd();
+            glBegin(GL_QUAD_STRIP);
+            for (long j = 0; j < steps; j += 1)
+            {
+                double t = ((double)j) / ((double)(steps - 1));
+                float x1, x2, y1, y2, z1, z2;
+                x1 = bez_point(t, A2[0], points[(i + 2) % nPoints], B2[0]);
+                y1 = bez_point(t, straightHeight, p3_hgt, straightHeight);
+                z1 = bez_point(t, A2[1], points[(i + 3) % nPoints], B2[1]);
+                x2 = bez_point(t, outer_A1[0], points[i], outer_B1[0]);
+                y2 = bez_point(t, straightHeight, p3_hgt + (tunnelSize * 2), straightHeight);
+                z2 = bez_point(t, outer_A1[1], points[i + 1], outer_B1[1]);
+
+                glNormal3f(-directionVector[0], 0, -directionVector[1]);
+
+                glVertex3f(x1, y1, z1);
+                glVertex3f(x2, y2, z2);
+            }
+            glEnd();
+
+            glBegin(GL_QUADS);
+            for (long j = 0; j < steps; j += 1)
+            {
+                glNormal3f(-directionVector[0], 0, -directionVector[1]);
+                
+                glVertex3f(outer_B1[0], straightHeight, outer_B1[1]);
+                glVertex3f(B1[0], straightHeight, B1[1]);
+                glVertex3f(B1[0], 0, B1[1]);
+                glVertex3f(outer_B1[0], 0, outer_B1[1]);
+
+                glVertex3f(outer_A1[0], straightHeight, outer_A1[1]);
+                glVertex3f(A1[0], straightHeight, A1[1]);
+                glVertex3f(A1[0], 0, A1[1]);
+                glVertex3f(outer_A1[0], 0, outer_A1[1]);
+
+                glVertex3f(outer_B2[0], straightHeight, outer_B2[1]);
+                glVertex3f(B2[0], straightHeight, B2[1]);
+                glVertex3f(B2[0], 0, B2[1]);
+                glVertex3f(outer_B2[0], 0, outer_B2[1]);
+
+                glVertex3f(outer_A2[0], straightHeight, outer_A2[1]);
+                glVertex3f(A2[0], straightHeight, A2[1]);
+                glVertex3f(A2[0], 0, A2[1]);
+                glVertex3f(outer_A2[0], 0, outer_A2[1]);
+            }
+            glEnd();
+        }
+    }
 }
 
 

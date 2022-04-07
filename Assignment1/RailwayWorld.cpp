@@ -24,6 +24,12 @@ long currentPosition = 0;
 
 int wagonSpacing = 22;
 
+long tunnelStart = 0;
+long tunnelLength = 200;
+long tunnelPadding = 10;
+long tunnelHeight = 20;
+long tunnelSize = 5;
+
 void myTimer(int value)
 {
     if (count % 1 == 0) {
@@ -48,6 +54,21 @@ void normalKeys(unsigned char key, int x, int y)
 {
     if (key == 'w') cam_dst -= cam_move_spd;
     else if (key == 's') cam_dst += cam_move_spd;
+
+    if (key == 'q') tunnelStart -= 20;
+    else if (key == 'e') tunnelStart += 20;
+
+    if (key == 'a') tunnelLength -= 20;
+    else if (key == 'd') tunnelLength += 20;
+
+    if (key == 'r') tunnelPadding -= 1;
+    else if (key == 'f') tunnelPadding += 1;
+
+    if (key == 't') tunnelSize -= 1;
+    else if (key == 'g') tunnelSize += 1;
+
+    if (key == 'y') tunnelHeight -= 2;
+    else if (key == 'h') tunnelHeight += 2;
     glutPostRedisplay();
 }
 
@@ -110,7 +131,7 @@ void display(void)
 
     // Fix weird poisitoning with track
     glTranslatef(-200, 0, -100);
-    bridge(0, 200, 5);
+    bridge(tunnelStart, tunnelLength, tunnelPadding, tunnelSize, tunnelHeight);
     tracks();
 
    glPushMatrix();
