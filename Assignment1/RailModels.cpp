@@ -268,10 +268,11 @@ void bridge(long startPoint, long length, long padding)
     length *= 2;
     float straightHeight = 20;
     float tunnelWidth = padding + outerTrackW;
+    float tunnelSize = 5;
 
     glColor4f(0.2, 0.2, 0.2, 1.0);   //Base 
 
-    // Inner wall
+    // Left Inner wall
     glBegin(GL_QUAD_STRIP);
     for (long i = 0; i < nPoints; i += 2)
     {
@@ -305,7 +306,7 @@ void bridge(long startPoint, long length, long padding)
     }
     glEnd();
 
-    // Outer wall
+    // Right Inner wall
     glBegin(GL_QUAD_STRIP);
     for (long i = 0; i < nPoints; i += 2)
     {
@@ -314,9 +315,8 @@ void bridge(long startPoint, long length, long padding)
             continue;
         }
 
-        float directionVector[2] = { 0 };
-
         // Create Ui vector 1
+        float directionVector[2] = { 0 };
         directionVector[0] = points[i] - points[(i + 2) % nPoints];
         directionVector[1] = points[i + 1] - points[(i + 3) % nPoints];
 
@@ -326,7 +326,7 @@ void bridge(long startPoint, long length, long padding)
         perpVector[1] = -directionVector[0];
         normalized2F(perpVector);
 
-        // Calculate track points
+        // Calculate wall points
         float B1[2] = { points[i] - perpVector[0] * tunnelWidth, points[i + 1] - perpVector[1] * tunnelWidth };
 
         glPushMatrix();
@@ -338,8 +338,43 @@ void bridge(long startPoint, long length, long padding)
     }
     glEnd();
 
-    //Top bit
+    // Inner roof
+    long prev_t = nPoints - 1;
+    int steps = 15;
+    int p3_hgt = straightHeight + 15;
+    glBegin(GL_QUAD_STRIP);
+    for (long i = 0; i < nPoints; i += 2)
+    {
+        // Only draw within a certain range
+        if (!(i >= startPoint && i <= startPoint + length)) {
+            continue;
+        }
 
+        // Create Ui vector 1
+        float directionVector[2] = { 0 };
+        directionVector[0] = points[i] - points[(i + 2) % nPoints];
+        directionVector[1] = points[i + 1] - points[(i + 3) % nPoints];
+
+        // Create perpendicular vector for Pi
+        float perpVector[2] = { 0 };
+        perpVector[0] = directionVector[1];
+        perpVector[1] = -directionVector[0];
+        normalized2F(perpVector);
+
+        // Calculate wall points
+        float A1[2] = { points[i] + perpVector[0] * tunnelWidth, points[i + 1] + perpVector[1] * tunnelWidth };
+        float B1[2] = { points[i] - perpVector[0] * tunnelWidth, points[i + 1] - perpVector[1] * tunnelWidth };
+
+        double t = ((double)i) / ((double)(steps - 1));
+        float x = bez_point(t, A1[0], points[i], A1[1]);
+        float y = bez_point(t, straightHeight, p3_hgt, straightHeight);
+        float z = bez_point(t, B1[0], points[i + 1], B1[1]);
+
+        glVertex3f(x, y, z);
+        glVertex3f(x, y, z);
+        prev_t = t;
+    }
+    glEnd();
 }
 
 
