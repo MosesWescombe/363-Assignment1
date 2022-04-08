@@ -5,12 +5,18 @@
 //  Header file for a collection of models for a railway scene
 //  ========================================================================
 
-extern long nPoints;
+extern const long nPoints;
 extern float points[];
+extern long stationPosition;
+
+void generateTrackPoints();
+
+float vectorLength2F(float vector[2]);
+void normalized2F(float vector[2]);
 
 void floor();
 
-void bridge(long startPoint, long length, long padding, long tunnelSize, long straightHeight);
+void tunnel(long startPoint, long length, long padding, long tunnelSize, long straightHeight);
 
 void tracks();
 
@@ -20,4 +26,6 @@ void wagon();
 
 void station();
 
-void loadTexture();
+void loadRoofTexture();
+
+void loadBrickTexture();
